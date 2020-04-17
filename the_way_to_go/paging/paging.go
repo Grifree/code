@@ -14,24 +14,25 @@ type Gen struct {
 	PageCount int
 	Url string
 }
-
-var errPageCanNotLessZero = errors.New("page can not less zero")
-var errTotalCanNotLessZero = errors.New("total can not less zero")
-var errPageSizeCanNotLessZero = errors.New("pageSize can not less zero")
-var errPageCountCanNotLessZero = errors.New("pageCount can not less zero")
+const errMsgPrefix = "{packageName}: paging.CreateData(gen) "
+var errPageCannotLessZero = errors.New(errMsgPrefix+"page cannot less zero")
+var errTotalCannotLessZero = errors.New(errMsgPrefix+"total cannot less zero")
+var errPageCountCannotLessZero = errors.New(errMsgPrefix+"pageCount cannot less zero")
+var errPageSizeCannotLessZero = errors.New(errMsgPrefix+"pageSize cannot less zero")
+var errPageSizeCannotBeZero = errors.New(errMsgPrefix+"pageSize cannot be 0")
 func CreateData(gen Gen) (paging Paging) {
 	// 判断错误数据
 	if gen.Page <= 0 {
-		panic(errPageCanNotLessZero)
+		panic(errPageCannotLessZero)
 	}
 	if gen.Total < 0 {
-		panic(errTotalCanNotLessZero)
+		panic(errTotalCannotLessZero)
 	}
 	if gen.PageSize < 0 {
-		panic(errPageSizeCanNotLessZero)
+		panic(errPageCountCannotLessZero)
 	}
 	if gen.PageCount < 0 {
-		panic(errPageCountCanNotLessZero)
+		panic(errPageSizeCannotBeZero)
 	}
 	// 基础数值
 	paging.Page = gen.Page
