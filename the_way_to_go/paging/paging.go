@@ -64,52 +64,50 @@ func CreateData(gen Gen) (Render, Gen) {
 	render.IsLastPage = gen.Page == render.LastPage
 
 	// ClosestPage.Prev.Exist
-	pageCountBetweenFirstToCurrentPage := 0 // 第一页和当前页之间有几个页
+	intervalFirstToCurrentPage := 0 // 第一页和当前页之间有几个页
 	if !render.IsFirstPage {
-		pageCountFromFirstToCurrentPage := gen.Page - 1
-		pageCountBetweenFirstToCurrentPage = pageCountFromFirstToCurrentPage - 1
+		intervalFirstToCurrentPage = naturalNumberInterval(1, gen.Page)
 	}
-	closestPagePrevPageLength := 0
-	if pageCountBetweenFirstToCurrentPage > 0 {
-		closestPagePrevPageLength = getIntMin(pageCountBetweenFirstToCurrentPage, gen.ClosestPageLength)
-		render.ClosestPage.Prev.Exist = closestPagePrevPageLength > 0
+	closestPrevPageLength := 0
+	if intervalFirstToCurrentPage > 0 {
+		closestPrevPageLength = minInt(intervalFirstToCurrentPage, gen.ClosestPageLength)
+		render.ClosestPage.Prev.Exist = closestPrevPageLength > 0
 	}
 	// ClosestPage.Prev.PageList
 	if render.ClosestPage.Prev.Exist {
-		for i:=1; i<=closestPagePrevPageLength; i++ {
+		for i:=1; i<=closestPrevPageLength; i++ {
 			curSlice := []int{gen.Page - i}
 			render.ClosestPage.Prev.PageList = append(curSlice, render.ClosestPage.Prev.PageList...)
 		}
 	}
 
 	// ClosestPage.Next.Exist
-	pageCountBetweenCurrentToLastPage := 0 // 当前页和最后一页之间有几个页
+	intervalCurrentToLastPage := 0 // 当前页和最后一页之间有几个页
 	if !render.IsLastPage {
-		pageCountFromCurrentToLastPage := render.LastPage - gen.Page
-		pageCountBetweenCurrentToLastPage = pageCountFromCurrentToLastPage - 1
+		intervalCurrentToLastPage = naturalNumberInterval(gen.Page, render.LastPage)
 	}
-	closestPageNextPageLength := 0
-	if pageCountBetweenCurrentToLastPage > 0 {
-		closestPageNextPageLength = getIntMin(pageCountBetweenCurrentToLastPage, gen.ClosestPageLength)
-		render.ClosestPage.Next.Exist = closestPageNextPageLength > 0
+	closestNextPageLength := 0
+	if intervalCurrentToLastPage > 0 {
+		closestNextPageLength = minInt(intervalCurrentToLastPage, gen.ClosestPageLength)
+		render.ClosestPage.Next.Exist = closestNextPageLength > 0
 	}
 	// ClosestPage.Next.PageList
 	if render.ClosestPage.Next.Exist {
-		for i:=1; i<=closestPageNextPageLength; i++ {
+		for i:=1; i<=closestNextPageLength; i++ {
 			render.ClosestPage.Next.PageList = append(render.ClosestPage.Next.PageList, gen.Page + i)
 		}
 	}
 
 	// JumpPage.Prev
-	render.JumpPage.Prev.Exist = pageCountBetweenFirstToCurrentPage > gen.ClosestPageLength
+	render.JumpPage.Prev.Exist = intervalFirstToCurrentPage > gen.ClosestPageLength
 	if render.JumpPage.Prev.Exist {
-		render.JumpPage.Prev.Interval = getIntMax(1, gen.Page - gen.JumpPageInterval)
+		render.JumpPage.Prev.Interval = maxInt(1, gen.Page - gen.JumpPageInterval)
 	}
 
 	// JumpPage.Next
-	render.JumpPage.Next.Exist = pageCountBetweenCurrentToLastPage > gen.ClosestPageLength
+	render.JumpPage.Next.Exist = intervalCurrentToLastPage > gen.ClosestPageLength
 	if render.JumpPage.Next.Exist {
-		render.JumpPage.Next.Interval = getIntMin(gen.Page + gen.JumpPageInterval, render.LastPage)
+		render.JumpPage.Next.Interval = minInt(gen.Page + gen.JumpPageInterval, render.LastPage)
 	}
 
 	return render, gen
@@ -155,16 +153,36 @@ func genCheckAndFix (genPtr *Gen) (pass bool){
 }
 
 // TODO 测试
-func getIntMin(a int, b int) (maxInt int) {
+func minInt(a int, b int) (maxInt int) {
 	if(a < b){
 		return a
 	}
 	return b
 }
 // TODO 测试
-func getIntMax(a int, b int) (maxInt int) {
+func maxInt(a int, b int) (maxInt int) {
 	if(a < b){
 		return b
 	}
 	return a
+}
+// TODO 测试
+func naturalNumberInterval(a int, b int) (interval int) {
+	var min, max int
+	if a > b {
+		min = b
+		max = a
+	} else if a < b {
+		min = a
+		max = b
+	} else {
+		// a == b
+		return 0
+	}
+	// 1 2 3 4 5 6 7 8 9
+	// min 1 max 5
+	// 5-1-1
+	// min 5 max 9
+	// 9-5-1
+	return max - min - 1
 }
