@@ -1,256 +1,148 @@
 package paging
 
 import (
-	"bytes"
 	"errors"
-	"strconv"
-	"strings"
+	"log"
 )
 
 type Gen struct {
 	Page int
 	Total int
-	PageSize int
-	PageCount int
-	Url string
+	PerPage int
+	JumpPageInterval int
+	ClosestPageLength int
 }
-const errMsgPrefix = "{packageName}: paging.CreateData(gen) "
-var errPageCannotLessZero = errors.New(errMsgPrefix+"page cannot less zero")
-var errTotalCannotLessZero = errors.New(errMsgPrefix+"total cannot less zero")
-var errPageCountCannotLessZero = errors.New(errMsgPrefix+"pageCount cannot less zero")
-var errPageSizeCannotLessZero = errors.New(errMsgPrefix+"pageSize cannot less zero")
-var errPageSizeCannotBeZero = errors.New(errMsgPrefix+"pageSize cannot be 0")
-func CreateData(gen Gen) (paging Paging) {
-	// 判断错误数据
-	if gen.Page <= 0 {
-		panic(errPageCannotLessZero)
-	}
-	if gen.Total < 0 {
-		panic(errTotalCannotLessZero)
-	}
-	if gen.PageSize < 0 {
-		panic(errPageCountCannotLessZero)
-	}
-	if gen.PageCount < 0 {
-		panic(errPageSizeCannotBeZero)
-	}
-	// 基础数值
-	paging.Page = gen.Page
-	paging.PageCount = gen.PageCount
-	paging.Total = gen.Total
-	paging.PageSize = gen.PageSize
-	if paging.PageSize == 0 {
-		paging.PageSize = 10
-	}
-	// 计算总页数
-	paging.PageCount = getPageCount(paging)
-	// TODO page做了修正处理
-	if paging.Page > paging.PageCount {
-		paging.Page = paging.PageCount
-	}
-	// 判断是否存在分页
-	paging.ExistPaging = getExistPaging(paging)
-	paging.Url = getUrl(gen.Url)
-	// 计算渲染分页所需数据
-	if(paging.ExistPaging){
-		paging.getPagingRenderData()
-	}
-	return paging
-}
-
-type Paging struct {
-	Page int
-	Total int
-	PageSize int
-	PageCount int
-	Url string
+type Render struct {
 	ExistPaging bool
-	PagingRenderData
-}
-type PagingRenderData struct {
-	PrevJumpBatch int
-	PrevSomePage int
-	NextSomePage int
-	NextJumpBatch int
 
+	LastPage int
 	IsFirstPage bool
 	IsLastPage bool
-	ExistPrevMorePage bool // 存在当前页之前的页码
-	ExistPrevBatch bool  // 存在当前页前的"..."
-	ExistNextMorePage bool
-	ExistNextBatch bool
 
-	PrevPage []int
-	NextPage []int
-	PrevJumpBatchPage int // "..."对应页数 max(page-7,1)
-	NextJumpBatchPage int // "..."对应页数 min(page+7,pageCount)
-}
-
-// 以Total PageSize为首选计算依据
-func getPageCount(paging Paging) (PageCount int) {
-	if paging.Total > 0 {
-		PageCount = paging.Total / paging.PageSize
-		if(paging.Total % paging.PageSize > 0){
-			PageCount += 1
+	ClosestPage struct {
+		Prev struct{
+			Exist bool
+			PageList []int // TODO 返回时 零值设为空数组,而非nil
+		}
+		Next struct{
+			Exist bool
+			PageList []int
 		}
 	}
-	return PageCount
-}
 
-func getExistPaging (paging Paging) (ExistPaging bool) {
-	if paging.Page > 0 && paging.PageCount > 0 {
-		return true
-	}
-	return false
-}
-
-func getUrl(url string) (pageUrl string) {
-	pageUrl = ""
-	if strings.Contains(url, "?") {
-		pageUrl = strings.Join([]string{url, "&page="}, "")
-	} else {
-		pageUrl = strings.Join([]string{url, "?page="}, "")
-	}
-	return pageUrl
-}
-
-func (self *Paging) getPagingRenderData() {
-	self.PagingRenderData.IsFirstPage = self.Page == 1
-	self.PagingRenderData.IsLastPage = self.Page == self.PageCount
-	// TODO 改成可传参配置
-	self.PagingRenderData.PrevJumpBatch = 7
-	self.PagingRenderData.PrevSomePage = 3
-	self.PagingRenderData.NextSomePage = 3
-	self.PagingRenderData.NextJumpBatch = 7
-
-	if 1 < self.Page {
-		self.PagingRenderData.ExistPrevMorePage = true
-	}
-	if self.Page - 1 > self.PagingRenderData.PrevSomePage {
-		self.PagingRenderData.ExistPrevBatch = true
-	}
-	// 计算 PrevPage
-	prevPageLength := 0
-	if self.PagingRenderData.ExistPrevBatch {
-		prevPageLength = self.PagingRenderData.PrevSomePage
-	}else if self.PagingRenderData.ExistPrevMorePage {
-		prevPageLength = self.Page - 1
-	}
-	if prevPageLength > 0 {
-		for p := self.Page - prevPageLength; p < self.Page; p++ {
-			self.PagingRenderData.PrevPage = append(self.PagingRenderData.PrevPage, p)
+	JumpPage struct{
+		Prev struct{
+			Exist bool
+			Interval int
 		}
-	}
-	// 计算 PrevJumpBatchPage
-	if self.PagingRenderData.ExistPrevBatch {
-		prevJumpBatchPage := self.Page - self.PagingRenderData.PrevJumpBatch
-		if(prevJumpBatchPage < 1){
-			prevJumpBatchPage = 1
+		Next struct{
+			Exist bool
+			Interval int
 		}
-		self.PagingRenderData.PrevJumpBatchPage = prevJumpBatchPage
-	}
-
-	if self.Page < self.PageCount {
-		self.PagingRenderData.ExistNextMorePage = true
-	}
-	if self.Page + self.PagingRenderData.NextSomePage < self.PageCount {
-		self.PagingRenderData.ExistNextBatch = true
-	}
-	// 计算 NextPage
-	nextPageLength := 0
-	if self.PagingRenderData.ExistNextBatch {
-		nextPageLength = self.PagingRenderData.NextSomePage
-	}else if self.PagingRenderData.ExistNextMorePage {
-		nextPageLength = self.PageCount - self.Page
-	}
-	if nextPageLength > 0 {
-		for i := 1; i <= nextPageLength; i++ {
-			p := self.Page + i
-			self.PagingRenderData.NextPage = append(self.PagingRenderData.NextPage, p)
-		}
-	}
-	// 计算 NextJumpBatchPage
-	if self.PagingRenderData.ExistNextBatch {
-		nextJumpBatchPage := self.Page + self.PagingRenderData.PrevJumpBatch
-		if(self.PageCount < nextJumpBatchPage){
-			nextJumpBatchPage = self.PageCount
-		}
-		self.PagingRenderData.NextJumpBatchPage = nextJumpBatchPage
 	}
 }
 
-// TODO 细节可配置
-func (self *Paging) RenderHTML() string  {
-	var bufHTML bytes.Buffer
-	bufHTML.WriteString("<div>")
-	if(self.Total > 0){
-		bufHTML.WriteString("<span>总共")
-		bufHTML.WriteString(strconv.Itoa(self.Total))
-		bufHTML.WriteString("个</span>")
+func CreateData(gen Gen) (Render, Gen) {
+	genCheckAndFix(&gen)
+
+	render := Render{}
+	render.ExistPaging = gen.Total > 0
+	if !render.ExistPaging {
+		return render, gen
+	}
+	// LastPage
+	render.LastPage = gen.Total / gen.PerPage
+	if gen.Total % gen.PerPage > 0 {
+		render.LastPage += 1
+	}
+	// 修正过大Page
+	if gen.Page > render.LastPage {
+		gen.Page = render.LastPage
 	}
 
-	// 上一页
-	if self.PagingRenderData.IsFirstPage {
-		bufHTML.WriteString("<span>上一页</span>")
-	}else{
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(self.Page - 1))
-		bufHTML.WriteString("\">上一页</a>")
-	}
-	// 第一页 和 ...
-	if self.PagingRenderData.ExistPrevBatch {
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString("1\">1</a>")
+	render.IsFirstPage = gen.Page == 1
+	render.IsLastPage = gen.Page == render.LastPage
 
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(self.PrevJumpBatchPage))
-		bufHTML.WriteString("\">...</a>")
+	// ClosestPage.Prev.Exist
+	pageCountBetweenFirstToCurrentPage := 0 // 第一页和当前页之间有几个页
+	if !render.IsFirstPage {
+		pageCountFromFirstToCurrentPage := gen.Page - 1
+		pageCountBetweenFirstToCurrentPage = pageCountFromFirstToCurrentPage - 1
 	}
-	// 前几页
-	for _,p := range self.PrevPage {
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(p))
-		bufHTML.WriteString("\">")
-		bufHTML.WriteString(strconv.Itoa(p))
-		bufHTML.WriteString("</a>")
+	closestPagePrevPageLength := 0
+	if pageCountBetweenFirstToCurrentPage > 0 {
+		closestPagePrevPageLength = getIntMin(pageCountBetweenFirstToCurrentPage, gen.ClosestPageLength)
+		render.ClosestPage.Prev.Exist = closestPagePrevPageLength > 0
 	}
-	// 当前页
-	if self.Page > 0 {
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(self.Page))
-		bufHTML.WriteString("\">")
-		bufHTML.WriteString(strconv.Itoa(self.Page))
-		bufHTML.WriteString("</a>")
+	// ClosestPage.Prev.PageList
+	if render.ClosestPage.Prev.Exist {
+		for i:=1; i<=closestPagePrevPageLength; i++ {
+			curSlice := []int{gen.Page - i}
+			render.ClosestPage.Prev.PageList = append(curSlice, render.ClosestPage.Prev.PageList...)
+		}
 	}
-	// 后几页
-	for _,p := range self.NextPage {
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(p))
-		bufHTML.WriteString("\">")
-		bufHTML.WriteString(strconv.Itoa(p))
-		bufHTML.WriteString("</a>")
-	}
-	// ... 和 最后页
-	if self.PagingRenderData.ExistNextBatch {
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(self.NextJumpBatchPage))
-		bufHTML.WriteString("\">...</a>")
 
-		bufHTML.WriteString("<a href=\"")
-		bufHTML.WriteString(self.Url)
-		bufHTML.WriteString(strconv.Itoa(self.PageCount))
-		bufHTML.WriteString("\">")
-		bufHTML.WriteString(strconv.Itoa(self.PageCount))
-		bufHTML.WriteString("</a>")
+	// ClosestPage.Next.Exist
+	pageCountBetweenCurrentToLastPage := 0 // 当前页和最后一页之间有几个页
+	if !render.IsLastPage {
+		pageCountFromCurrentToLastPage := render.LastPage - gen.Page
+		pageCountBetweenCurrentToLastPage = pageCountFromCurrentToLastPage - 1
 	}
-	// TODO 跳转指定页
+	closestPageNextPageLength := 0
+	if pageCountBetweenCurrentToLastPage > 0 {
+		closestPageNextPageLength = getIntMin(pageCountBetweenCurrentToLastPage, gen.ClosestPageLength)
+		render.ClosestPage.Next.Exist = closestPageNextPageLength > 0
+	}
+	// ClosestPage.Next.PageList
+	if render.ClosestPage.Next.Exist {
+		for i:=1; i<=closestPageNextPageLength; i++ {
+			render.ClosestPage.Next.PageList = append(render.ClosestPage.Next.PageList, gen.Page + i)
+		}
+	}
 
-	return bufHTML.String()
+
+
+	return render, gen
+}
+
+const errMsgPrefix = "paging: paging.CreateData(gen) "
+var errPageCannotLessZero = errors.New(errMsgPrefix+"gen.Page cannot less zero")
+var errPageCannotBeZeroAndFix = errors.New(errMsgPrefix+"gen.Page can not be 0, it's set to 1, but you need check your code")
+var errTotalCannotLessZero = errors.New(errMsgPrefix+"gen.Total cannot less zero")
+var errPerPageCannotLessZero = errors.New(errMsgPrefix+"gen.PerPage cannot less zero")
+var errPerPageCannotBeZero = errors.New(errMsgPrefix+"gen.PerPage cannot be 0")
+var errJumpPageIntervalCannotLessZero = errors.New(errMsgPrefix+"gen.JumpPageInterval cannot less zero")
+var errClosestPageLengthCannotLessZero = errors.New(errMsgPrefix+"gen.ClosestPageLength cannot less zero")
+func genCheckAndFix (genPtr *Gen) (pass bool){
+	if genPtr.Page < 0 {
+		panic(errPageCannotLessZero)
+	}
+	if genPtr.Page == 0 {
+		genPtr.Page = 1
+		log.Print(errPageCannotBeZeroAndFix)
+	}
+	if genPtr.Total < 0 {
+		panic(errTotalCannotLessZero)
+	}
+	if genPtr.PerPage < 0 {
+		panic(errPerPageCannotLessZero)
+	}
+	if genPtr.PerPage == 0 {
+		panic(errPerPageCannotBeZero)
+	}
+	if genPtr.JumpPageInterval < 0 {
+		panic(errJumpPageIntervalCannotLessZero)
+	}
+	if genPtr.ClosestPageLength < 0 {
+		panic(errClosestPageLengthCannotLessZero)
+	}
+	// TODO pass 怎么测试
+	return true
+}
+
+func getIntMin(a int, b int) (maxInt int) {
+	if(a < b){
+		return a
+	}
+	return b
 }
