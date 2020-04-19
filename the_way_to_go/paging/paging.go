@@ -100,7 +100,17 @@ func CreateData(gen Gen) (Render, Gen) {
 		}
 	}
 
+	// JumpPage.Prev
+	render.JumpPage.Prev.Exist = pageCountBetweenFirstToCurrentPage > gen.ClosestPageLength
+	if render.JumpPage.Prev.Exist {
+		render.JumpPage.Prev.Interval = getIntMax(1, gen.Page - gen.JumpPageInterval)
+	}
 
+	// JumpPage.Next
+	render.JumpPage.Next.Exist = pageCountBetweenCurrentToLastPage > gen.ClosestPageLength
+	if render.JumpPage.Next.Exist {
+		render.JumpPage.Next.Interval = getIntMin(gen.Page + gen.JumpPageInterval, render.LastPage)
+	}
 
 	return render, gen
 }
@@ -112,6 +122,7 @@ var errTotalCannotLessZero = errors.New(errMsgPrefix+"gen.Total cannot less zero
 var errPerPageCannotLessZero = errors.New(errMsgPrefix+"gen.PerPage cannot less zero")
 var errPerPageCannotBeZero = errors.New(errMsgPrefix+"gen.PerPage cannot be 0")
 var errJumpPageIntervalCannotLessZero = errors.New(errMsgPrefix+"gen.JumpPageInterval cannot less zero")
+var errJumpPageIntervalCannotBeZero = errors.New(errMsgPrefix+"gen.JumpPageInterval cannot be 0")
 var errClosestPageLengthCannotLessZero = errors.New(errMsgPrefix+"gen.ClosestPageLength cannot less zero")
 func genCheckAndFix (genPtr *Gen) (pass bool){
 	if genPtr.Page < 0 {
@@ -133,6 +144,9 @@ func genCheckAndFix (genPtr *Gen) (pass bool){
 	if genPtr.JumpPageInterval < 0 {
 		panic(errJumpPageIntervalCannotLessZero)
 	}
+	if genPtr.JumpPageInterval == 0 {
+		panic(errJumpPageIntervalCannotBeZero)
+	}
 	if genPtr.ClosestPageLength < 0 {
 		panic(errClosestPageLengthCannotLessZero)
 	}
@@ -140,9 +154,17 @@ func genCheckAndFix (genPtr *Gen) (pass bool){
 	return true
 }
 
+// TODO 测试
 func getIntMin(a int, b int) (maxInt int) {
 	if(a < b){
 		return a
 	}
 	return b
+}
+// TODO 测试
+func getIntMax(a int, b int) (maxInt int) {
+	if(a < b){
+		return b
+	}
+	return a
 }
