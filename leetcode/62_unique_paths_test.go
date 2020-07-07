@@ -23,6 +23,7 @@
 package leetcode_test
 
 import (
+	"math/big"
 	"testing"
 )
 
@@ -32,7 +33,7 @@ func uniquePathsByEnum(m int, n int) (wayCount int) {
 	return
 }
 // method 2 : 排列组合法
-func uniquePathsByCombination(m int, n int) (wayCount int) {
+func uniquePathsByCombination(m int, n int) uint64 {
 	//fmt.Printf("\n =================")
 	if m == 1 || n == 1 {
 		return 1
@@ -43,14 +44,22 @@ func uniquePathsByCombination(m int, n int) (wayCount int) {
 	//fmt.Printf("\n stepToBottom： %d", stepToBottom)
 	stepAll := stepToRight + stepToBottom
 	//fmt.Printf("\n stepAll： %d", stepAll)
-	wayCount = factorial(stepAll) / ( factorial(stepToRight) * factorial(stepToBottom) )
+	allOrder := factorial(stepAll)
+	rightOrder := factorial(stepToRight)
+	bottomOrder := factorial(stepToBottom)
+	numeratorOfwayCount := allOrder
+	var denominatorOfwayCount big.Int
+	denominatorOfwayCount.Mul(&bottomOrder, &rightOrder)
+	var wayCount big.Int
+	wayCount.Div(&numeratorOfwayCount, &denominatorOfwayCount)
 	//fmt.Printf("\n wayCount： %d", wayCount)
-	return wayCount
+	return wayCount.Uint64()
 }
-func factorial (num int) (value int) {
-	value = 1
-	for i := 1; i<=num ; i++ {
-		value *= i
+func factorial (num int) (value big.Int) {
+	value.SetUint64(1)
+	for i := 1 ; i <= num ; i++ {
+		n := int64(i)
+		value.Mul(big.NewInt(n), &value)
 	}
 	//fmt.Printf("\n num： %d", num)
 	//fmt.Printf("\n value： %d", value)
@@ -58,14 +67,10 @@ func factorial (num int) (value int) {
 }
 /* test */
 func TestUniquePathsByCombination(t *testing.T) {
-	/*a:= big.NewInt(12434123)
-	b := big.NewInt(21341234)
-	a.Mul(b, a)
-	fmt.Printf("a%d", a.Int64())*/
 	type matrix struct {
 		m int
 		n int
-		expect int
+		expect uint64
 	}
 	matrixList := []matrix{
 		{
