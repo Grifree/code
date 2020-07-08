@@ -28,22 +28,19 @@ import (
 )
 
 /* solution */
-// method 1 : 枚举路径法
+// method 1 : 枚举路径法 (数据量过大,舍弃)
 func uniquePathsByEnum(m int, n int) (wayCount int) {
 	return
 }
 // method 2 : 排列组合法
-func uniquePathsByCombination(m int, n int) uint64 {
-	//fmt.Printf("\n =================")
+func uniquePathsByCombination(m int, n int) int {
 	if m == 1 || n == 1 {
 		return 1
 	}
 	stepToRight := m - 1
-	//fmt.Printf("\n stepToRight： %d", stepToRight)
 	stepToBottom := n - 1
-	//fmt.Printf("\n stepToBottom： %d", stepToBottom)
 	stepAll := stepToRight + stepToBottom
-	//fmt.Printf("\n stepAll： %d", stepAll)
+
 	allOrder := factorial(stepAll)
 	rightOrder := factorial(stepToRight)
 	bottomOrder := factorial(stepToBottom)
@@ -52,17 +49,15 @@ func uniquePathsByCombination(m int, n int) uint64 {
 	denominatorOfwayCount.Mul(&bottomOrder, &rightOrder)
 	var wayCount big.Int
 	wayCount.Div(&numeratorOfwayCount, &denominatorOfwayCount)
-	//fmt.Printf("\n wayCount： %d", wayCount)
-	return wayCount.Uint64()
+	return int(wayCount.Uint64())
 }
 func factorial (num int) (value big.Int) {
+	// 阶乘 计算溢出问题 通过big库解锁
 	value.SetUint64(1)
 	for i := 1 ; i <= num ; i++ {
 		n := int64(i)
 		value.Mul(big.NewInt(n), &value)
 	}
-	//fmt.Printf("\n num： %d", num)
-	//fmt.Printf("\n value： %d", value)
 	return value
 }
 /* test */
@@ -70,7 +65,7 @@ func TestUniquePathsByCombination(t *testing.T) {
 	type matrix struct {
 		m int
 		n int
-		expect uint64
+		expect int
 	}
 	matrixList := []matrix{
 		{
