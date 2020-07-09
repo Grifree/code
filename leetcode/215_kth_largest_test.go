@@ -18,7 +18,8 @@ import (
 	"testing"
 )
 
-// solution
+/* solution */
+// method 1 : 冒泡排序
 func findKthLargest(nums []int, k int) int {
 	listDesc := sortByDesc(nums)
 	kth := listDesc[k - 1]
@@ -35,8 +36,9 @@ func sortByDesc (list []int) (listDesc []int) {
 	}
 	return listDesc
 }
+// method 2 : 新切片 (切片传址问题)
 
-// test
+/* test */
 func TestFindKthLargest(t *testing.T) {
 	type problem struct {
 		nums []int
