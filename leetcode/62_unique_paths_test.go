@@ -32,7 +32,34 @@ import (
 func uniquePathsByEnum(m int, n int) (wayCount int) {
 	return
 }
-// method 2 : 排列组合法
+
+// method 2 : 遍历计数法
+func uniquePathsByCount(m int, n int) int {
+	matrix := make([][]int, n)
+	for y := 0 ; y < n ; y++ {
+		matrix[y] = make([]int, m)
+		for x := 0 ; x < m ; x++ {
+			// 起点
+			if x == 0 && y == 0 {
+				matrix[y][x] = 1
+				continue;
+			}
+			// 其余点
+			top := 0
+			if x - 1 >= 0 {
+				top = matrix[y][x-1]
+			}
+			left := 0
+			if y - 1 >= 0 {
+				left = matrix[y-1][x]
+			}
+			matrix[y][x] = top + left
+		}
+	}
+	return matrix[n-1][m-1]
+}
+
+// method 3 : 排列组合法
 func uniquePathsByCombination(m int, n int) int {
 	if m == 1 || n == 1 {
 		return 1
@@ -85,7 +112,7 @@ func TestUniquePathsByCombination(t *testing.T) {
 		},
 	}
 	for _, item := range matrixList {
-		expect := uniquePathsByCombination(item.m, item.n)
+		expect := uniquePathsByCount(item.m, item.n)
 		if expect != item.expect {
 			t.Errorf("\nexpect：%d\nactual：%d", item.expect, expect)
 		}
