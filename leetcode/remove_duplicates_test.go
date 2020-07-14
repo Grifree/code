@@ -20,38 +20,35 @@ import (
 )
 
 func removeDuplicates(nums []int) []int {
-	uniqueIndex := 0
+	//fmt.Printf("\n nums：%d",nums)
+	uniqueCount := 0
 	repeatCount := 0
-	for i,_ := range nums {
+	for i,_ := range nums{
 		//fmt.Printf("\n =====i：%d",i)
 		if i == 0 {
+			uniqueCount++
 			continue
 		}
-		exist := false
+		unique := true
 		// 向前遍历 是否已存在
 		for j := i - 1 ; j >= 0 ; j-- {
-			//fmt.Printf("\n j：%d",j)
+			//fmt.Printf(", j：%d",j)
 			if nums[j] == nums[i] {
-				exist = true
-				uniqueIndex = i
-				//fmt.Printf("\n exist：%d",uniqueIndex)
+				unique = false
+				repeatCount++
 				break
 			}
 		}
-		if exist && (repeatCount + uniqueIndex < len(nums)) {
-			repeatCount += 1
-			//fmt.Printf("\n repeatCount：%d",repeatCount)
-			//fmt.Printf("\n len(nums)：%d",len(nums))
-			//fmt.Printf("\n nums[i]：%d",nums[i])
-			//fmt.Printf("\n nums[len(nums) - repeatCount]：%d",nums[len(nums) - repeatCount])
-			nums[i], nums[len(nums) - repeatCount] = nums[len(nums) - repeatCount], nums[i]
+		if unique {
+			//fmt.Printf("\n 新")
+			uniqueCount++
+			nums[i], nums[uniqueCount-1] = nums[uniqueCount-1], nums[i]
 		}
 		//fmt.Printf("\n nums：%d",nums)
 	}
 	//fmt.Printf("\n nums：%d",nums)
-	//fmt.Printf("\n uniqueIndex：%d",uniqueIndex)
-	//fmt.Printf("\n nums[:uniqueIndex]：%d",nums[:uniqueIndex])
-	return nums[:uniqueIndex]
+	//fmt.Printf("\n\t uniqueCount：%d, repeatCount：%d",uniqueCount, repeatCount)
+	return nums[:uniqueCount]
 }
 
 func TestRemoveDuplicates(t *testing.T) {
@@ -61,8 +58,16 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 	problemList := []problem{
 		{
+			[]int{},
+			[]int{},
+		},
+		{
 			[]int{1, 1, 2},
 			[]int{1, 2},
+		},
+		{
+			[]int{0,0,1,1,1,2,2,3,3,4},
+			[]int{0,1,2,3,4},
 		},
 	}
 	for _, item := range problemList {
