@@ -1,7 +1,6 @@
 package main
 
 import (
-	l "github.com/og/x/log"
 	"strconv"
 )
 
@@ -41,9 +40,9 @@ func (p *Person) String() string {
 
 func studyChan() {
 	bs := NewPerson("Smith Bill", 2500.5)
-	l.V(bs)
+	//l.V(bs)
 	bs.SetSalary(4000.25)
-	l.V(bs)
-	l.V("Salary changed:")
-	l.V(bs)
+	//l.V(bs)
+	//l.V("Salary changed:")
+	//l.V(bs)
 }
