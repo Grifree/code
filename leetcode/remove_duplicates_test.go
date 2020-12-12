@@ -11,6 +11,10 @@
 给定 nums = [0,0,1,1,1,2,2,3,3,4],
 函数应该返回新的长度 5, 并且原数组 nums 的前五个元素被修改为 0, 1, 2, 3, 4。
 你不需要考虑数组中超出新长度后面的元素。
+
+来源：力扣（LeetCode）
+链接：https://leetcode-cn.com/explore/interview/card/top-interview-questions-easy/1/array/21/
+著作权归领扣网络所有。商业转载请联系官方授权，非商业转载请注明出处。
 */
 package leetcode_test
 
@@ -19,41 +23,40 @@ import (
 	"testing"
 )
 
+/* solution */
 func removeDuplicates(nums []int) []int {
-	uniqueIndex := 0
+	//fmt.Printf("\n nums：%d",nums)
+	uniqueCount := 0
 	repeatCount := 0
-	for i,_ := range nums {
+	for i,_ := range nums{
 		//fmt.Printf("\n =====i：%d",i)
 		if i == 0 {
+			uniqueCount++
 			continue
 		}
-		exist := false
+		unique := true
 		// 向前遍历 是否已存在
 		for j := i - 1 ; j >= 0 ; j-- {
-			//fmt.Printf("\n j：%d",j)
+			//fmt.Printf(", j：%d",j)
 			if nums[j] == nums[i] {
-				exist = true
-				uniqueIndex = i
-				//fmt.Printf("\n exist：%d",uniqueIndex)
+				unique = false
+				repeatCount++
 				break
 			}
 		}
-		if exist && (repeatCount + uniqueIndex < len(nums)) {
-			repeatCount += 1
-			//fmt.Printf("\n repeatCount：%d",repeatCount)
-			//fmt.Printf("\n len(nums)：%d",len(nums))
-			//fmt.Printf("\n nums[i]：%d",nums[i])
-			//fmt.Printf("\n nums[len(nums) - repeatCount]：%d",nums[len(nums) - repeatCount])
-			nums[i], nums[len(nums) - repeatCount] = nums[len(nums) - repeatCount], nums[i]
+		if unique {
+			//fmt.Printf("\n 新")
+			uniqueCount++
+			nums[i], nums[uniqueCount-1] = nums[uniqueCount-1], nums[i]
 		}
 		//fmt.Printf("\n nums：%d",nums)
 	}
 	//fmt.Printf("\n nums：%d",nums)
-	//fmt.Printf("\n uniqueIndex：%d",uniqueIndex)
-	//fmt.Printf("\n nums[:uniqueIndex]：%d",nums[:uniqueIndex])
-	return nums[:uniqueIndex]
+	//fmt.Printf("\n\t uniqueCount：%d, repeatCount：%d",uniqueCount, repeatCount)
+	return nums[:uniqueCount]
 }
 
+/* test */
 func TestRemoveDuplicates(t *testing.T) {
 	type problem struct {
 		nums []int
@@ -61,8 +64,16 @@ func TestRemoveDuplicates(t *testing.T) {
 	}
 	problemList := []problem{
 		{
+			[]int{},
+			[]int{},
+		},
+		{
 			[]int{1, 1, 2},
 			[]int{1, 2},
+		},
+		{
+			[]int{0,0,1,1,1,2,2,3,3,4},
+			[]int{0,1,2,3,4},
 		},
 	}
 	for _, item := range problemList {
