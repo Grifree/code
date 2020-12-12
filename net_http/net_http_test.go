@@ -5,23 +5,23 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"strings"
 	"testing"
 )
 
-var client = &http.Client{}
+var client = &http.Client{} //Client的Transport字段一般会含有内部状态（缓存TCP连接），因此Client类型值应尽量被重用而不是每次需要都创建新的
 const urlGetStr = "http://unpkg.com/goclub@0.0.1/package.json"
 
 // GET
-func TestRequest_getBody(t *testing.T)  {
+func TestRequest_get(t *testing.T)  {
 	resp, err := http.Get(urlGetStr);if err !=nil {panic(err)}
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body);if err !=nil {panic(err)}
 	log.Print(string(body))
 }
-/*Client的Transport字段一般会含有内部状态（缓存TCP连接），因此Client类型值应尽量被重用而不是每次需要都创建新的*/
 func TestRequest_client_get(t *testing.T){
 	resp, err := client.Get(urlGetStr);if err !=nil {panic(err)}
 	defer resp.Body.Close()
@@ -38,22 +38,20 @@ func TestRequest_client_do(t *testing.T){
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body);if err !=nil {panic(err)}
 	log.Print(string(body))
-	//log.Print(resp.Header)
+	log.Print(resp.Header)
 }
 
 // POST
-func TestRequest_postBodyJson(t *testing.T)  {
+func TestRequest_post_json(t *testing.T)  {
 	// 请求数据
 	req := struct{
-		ID string `json:"jsonID" form:"formID"`
+		ID string `json:"jsonID"`
 	}{
 		ID:"id_1",
 	}
 	reqByte, err:= json.Marshal(&req);if err !=nil {panic(err)}
 	reqBody := bytes.NewReader(reqByte)
 	resp, err := http.Post("http://127.0.0.1:1219/post_json", "application/json", reqBody);if err !=nil {panic(err)}
-	//resp, err := http.Post("http://127.0.0.1:1219/post_json", "multipart/form-data;", reqBody);if err !=nil {panic(err)}
-	//resp, err := http.Post("http://127.0.0.1:1219/post_json", "application/x-www-form-urlencoded;", reqBody);if err !=nil {panic(err)}
 	defer resp.Body.Close()
 
 	// 读值
@@ -70,15 +68,25 @@ func TestRequest_postBodyJson(t *testing.T)  {
 	err =json.Unmarshal(body, &res);if err !=nil {panic(err)}
 	log.Print("res: ",res)
 }
-
-func TestRequest_postBodyForm(t *testing.T)  {
+func TestRequest_post_form(t *testing.T)  {
 	// 请求数据
-	v := url.Values{}
-	v.Set("name", "free")
-	log.Print(v.Encode())
-	reqBody := strings.NewReader(v.Encode())
+	reqData := url.Values{}
+	reqData.Set("name", "free")
+	reqBody := strings.NewReader(reqData.Encode())
 
-	resp, err := http.Post("http://127.0.0.1:1219/post_json", "application/x-www-form-urlencoded", reqBody);if err !=nil {panic(err)}
+	//resp, err := http.Post("http://127.0.0.1:1219/post_json", "application/x-www-form-urlencoded", reqBody);if err !=nil {panic(err)}
+	//defer resp.Body.Close()
+	httpReq, err := http.NewRequest("POST", "http://127.0.0.1:1219/post_json", reqBody);if err !=nil {panic(err)}
+	httpReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(httpReq);if err !=nil {panic(err)}
+	defer resp.Body.Close()
+}
+func TestRequest_post_multform(t *testing.T)  {
+	reqData := &bytes.Buffer{}
+	w := multipart.NewWriter(reqData)
+	err:=w.WriteField("ttt","multform");if err !=nil {panic(err)}
+	err=w.Close();if err !=nil {panic(err)}
+	resp, err := http.Post("http://127.0.0.1:1219/post_json", "multipart/form-data;", reqData);if err !=nil {panic(err)}
 	defer resp.Body.Close()
 }
 // go响应/发送图片
