@@ -63,6 +63,9 @@ func (dep Service) getExchangeCode_demo2(ctx context.Content) (vipInviteCode str
 	}
 	return vipInviteCode
 }
-/* demo2: 需要明确点在于1兑换码是需要存储的 2存储于redis和sql都是可以的,且存在于redis更便于操作,利于解决并发问题 3redis尽可能不存储持久化的数据的问题好解决,可以每日同步到sql中
+/* demo2: 需要明确点在于
+1兑换码是需要存储的
+2存储于redis和sql都是可以的,且存在于redis更便于操作,利于解决并发问题
+3redis尽可能不存储持久化的数据的问题好解决,可以每日同步到sql中
 另个需求考虑点,避免一个人领取多个兑换码,可以加入用户体系,加入每个userid兑换的限制
 */
