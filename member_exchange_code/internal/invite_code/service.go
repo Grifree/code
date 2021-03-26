@@ -62,5 +62,5 @@ func (dep Service) InviteCode(ctx context.Context, userID pd.IDUser) (invitedCod
 	return
 }
 func (dep Service) SyncInviteCodeToPD(ctx context.Context, date string) (reject error) {
-	
+
 }
