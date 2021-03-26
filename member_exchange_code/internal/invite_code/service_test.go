@@ -2,8 +2,13 @@ package inviteCodeS_test
 
 import (
 	"context"
+	"errors"
+	red "github.com/goclub/redis"
 	xtime "github.com/goclub/time"
 	"github.com/google/uuid"
+	"github.com/mediocregopher/radix/v3"
+	radix3 "github.com/redis-driver/mediocregopher-radix-v3"
+	redScript "github.com/redis-driver/script"
 	"log"
 	"strconv"
 	"sync"
@@ -76,24 +81,7 @@ type Service struct {
 另个需求考虑点,避免一个人领取多个兑换码,可以加入用户体系,加入每个userid兑换的限制
 */
 
-package main
-
-import (
-"context"
-"errors"
-red "github.com/goclub/redis"
-xtime "github.com/goclub/time"
-"github.com/google/uuid"
-"github.com/mediocregopher/radix/v3"
-radix3 "github.com/redis-driver/mediocregopher-radix-v3"
-redScript "github.com/redis-driver/script"
-"log"
-"strconv"
-"sync"
-"time"
-)
-
-func main () {
+func testFn () {
 	ctx := context.Background()
 	_, err := red.DEL{
 		Key:  CDKeyHashKey(),
