@@ -1,8 +1,4 @@
-package service
-
-import (
-	"context"
-)
+package inviteCodeS_test
 
 type Service struct {
 
@@ -13,7 +9,7 @@ type Service struct {
 限定每天只需新增100名会员, 抢的码是会员兑换资格码
 每天9点开放100个
 */
-func (dep Service) getExchangeCode_demo1(ctx context.Content) (vipInviteCode string, reject error) {
+/*func (dep Service) getExchangeCode_demo1(ctx context.Content) (vipInviteCode string, reject error) {
 	// 开始时间校验
 	{
 		if now < date(`${today} 09:00:00`){
@@ -47,10 +43,10 @@ func (dep Service) getExchangeCode_demo1(ctx context.Content) (vipInviteCode str
 		}
 	}
 	return
-}
+}*/
 /* demo1:有redis做数量判断后,sql的数量判断就重复了,且延时性问题加剧.此外sql事务和redis减数量不是原子性操作,会导致部分兑换码没有发出去.*/
 
-func (dep Service) getExchangeCode_demo2(ctx context.Content) (vipInviteCode string, reject error) {
+/*func (dep Service) getExchangeCode_demo2(ctx context.Content) (vipInviteCode string, reject error) {
 	// redis lua 脚本
 	{
 		count := redis.Count("hash",`vipInviteCode:${today}`, 25hour)
@@ -62,7 +58,7 @@ func (dep Service) getExchangeCode_demo2(ctx context.Content) (vipInviteCode str
 		}
 	}
 	return vipInviteCode
-}
+}*/
 /* demo2: 需要明确点在于
 1兑换码是需要存储的
 2存储于redis和sql都是可以的,且存在于redis更便于操作,利于解决并发问题
