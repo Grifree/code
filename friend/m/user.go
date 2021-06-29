@@ -1,8 +1,8 @@
 // Generate by https://tools.goclub.vip
 package m
 import (
-"database/sql"
-sq "github.com/goclub/sql"
+	"database/sql"
+	sq "github.com/goclub/sql"
 )
 
 type IDUser uint64
@@ -13,15 +13,13 @@ func (id IDUser) Uint64() uint64 {
 	return uint64(id)
 }
 type TableUser struct {
-	sq.WithoutSoftDelete
 }
-// 给 TableName 加上指针 * 能避免 m.InsertModel(user) 这种错误， 应当使用 m.InsertModel(&user) 或
+// 给 TableName 加上指针 * 能避免 db.InsertModel(user) 这种错误， 应当使用 db.InsertModel(&user) 或
 func (*TableUser) TableName() string { return "user" }
 type User struct {
-	ID   IDUser  `m:"id" sq:"ignoreCreate" sq:"ignoreUpdate" `
-	Name string  `m:"name"`
+	ID   IDUser  `db:"id" sq:"ignoreCreate" sq:"ignoreUpdate" `
+	Name string  `db:"name"`
 	TableUser
-	sq.DefaultLifeCycle
 }
 func (v User) PrimaryKey() []sq.Condition {
 	return sq.And(
@@ -47,4 +45,3 @@ func (v TableUser) Column() (col struct{
 
 	return
 }
-
