@@ -62,21 +62,18 @@ type FriendListReply struct {
 	Name string
 }
 func (dep Biz) FriendList(ctx context.Context,userID m.IDUser) (list []FriendListReply, err error) {
+
 	row, err := dep.DB.Core.QueryContext(ctx,`
 		select id,name
 		from USER
 		where id in (
-			select user_id
-			from user_friend
-			where friend_user_id = ?
-		)
-		union
-		select id,name
-		from USER
-		where id in (
 			select friend_user_id
-			from user_friend
-			where user_id = ?
+				from user_friend
+				where user_id = ?
+			union
+			select user_id
+				from user_friend
+				where friend_user_id = ?
 		)
 	`,userID,userID);if err != nil {
 		return
@@ -94,7 +91,7 @@ func (dep Biz) FriendList(ctx context.Context,userID m.IDUser) (list []FriendLis
 }
 func (dep Biz) IsFriend(ctx context.Context, userID m.IDUser, targetUserID m.IDUser)(isFriend bool, err error){
 	if userID == targetUserID {
-		return false, errors.New("不能加自己")
+		return false, errors.New("TODO不能加自己")
 	}
 	if targetUserID == 0 {
 		return false, errors.New("好友不能空")
